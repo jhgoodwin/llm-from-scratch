@@ -3,8 +3,9 @@ name = "llm-from-scratch"
 version = "0.1.0"
 description = "Train a GPT from scratch on a MacBook"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
+    "clearml>=2.1.8",
     "datasets>=4.5.0",
     "huggingface-hub>=1.8.0",
     "numpy>=2.0.2",
