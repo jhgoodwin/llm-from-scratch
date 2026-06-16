@@ -2,7 +2,7 @@
 
 Your model is trained. Now let's make it write. Text generation with a GPT is **autoregressive**: generate one token at a time, append it to the input, and repeat.
 
-Create a new file called `generate.py` in your scratchpad. Once you've written it, go back to `train.py` and add `from generate import generate` at the top — this enables the sample generation during training that you skipped in Part 3.
+Create a new file called `generate.py` in the project root. Once you've written it, go back to `train.py` and add `from generate import generate` at the top — this enables the sample generation during training that you skipped in Part 3.
 
 ## The Naive Approach: Greedy Decoding
 
@@ -174,14 +174,14 @@ CORIOLANUS:
 Is it now of your many death?
 ```
 
-### Step 2400 (val loss ~1.60) — Peak quality, plausible Shakespeare
+### Step 1500 (val loss 1.57) — Peak quality, plausible Shakespeare
 ```
 To be or not to be some of you shall know
 That everlature by Romeo: what news,
 Which you had knock'd my part to speak
 ```
 
-Note: the best output is around step 1500-2500. After that, the model overfits and starts regurgitating memorized training data (see Part 3 for details).
+Note: the best output is around step 1500-2000. After that, the model overfits and starts regurgitating memorized training data (see Part 3 for details).
 
 ## Key Takeaways
 

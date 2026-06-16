@@ -22,7 +22,7 @@ Use the `--seed` flag to make your generation reproducible. The same seed + same
 
 ```bash
 # example submission command
-python generate.py checkpoint_best.pt --prompt "The morning sun" --temperature 0.7 --top_k 30 --seed 42
+python generate.py checkpoint_lowest_loss.pt --prompt "The morning sun" --temperature 0.7 --top_k 30 --seed 42
 ```
 
 We will verify your submission by running this exact command against your checkpoint.
@@ -95,4 +95,4 @@ The same model can produce very different output depending on generation setting
 - No pretrained models, no fine-tuning, no loading weights from anywhere
 - No manual editing of the output except of trimming — what the model generates is what you submit
 - You can modify any part of the code: model architecture, training loop, tokenizer, generation
-- Training must run on your own machine or Google Colab (no paid cloud GPUs)
+- Training must run on your own machine, workshop provided ClearML queue, or Google Colab (no paid cloud GPUs)

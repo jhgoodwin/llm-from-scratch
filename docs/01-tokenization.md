@@ -9,7 +9,7 @@ No file to create here — the tokenizer is built directly into `train.py` (Part
 We use the simplest possible tokenizer: each unique character gets an ID.
 
 ```python
-text = open("../data/shakespeare.txt").read()
+text = open("data/shakespeare.txt").read()
 chars = sorted(set(text))
 vocab_size = len(chars)  # 65 for Shakespeare
 

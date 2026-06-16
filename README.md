@@ -41,7 +41,7 @@ Then set up the project:
 
 ```bash
 uv sync
-mkdir scratchpad && cd scratchpad
+cp env.sample .env
 ```
 
 ### Google Colab

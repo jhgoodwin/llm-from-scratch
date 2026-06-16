@@ -7,15 +7,16 @@ Time to wire everything up, train on real data, and prepare for the competition.
 By now you should have:
 
 ```
-scratchpad/
-├── model.py           # GPT architecture (Part 2)
-├── train.py           # Tokenization + data loading + training loop (Parts 1 & 3)
-└── generate.py        # Text generation (Part 4)
+model.py           # GPT architecture (Part 2)
+train.py           # Tokenization + data loading + training loop (Parts 1 & 3)
+generate.py        # Text generation (Part 4)
 ```
 
 The Shakespeare dataset is included in the repo at `data/shakespeare.txt` — no download needed.
 
 ### Google Colab
+
+NOTE: The Colab notes are unvalidated.
 
 If you're using Colab instead of a local setup:
 
@@ -37,13 +38,12 @@ If you're using Colab instead of a local setup:
 5. Write your model, training loop, and generate code in notebook cells (paste from the docs or write it yourself)
 6. Use `"data/shakespeare.txt"` as the data path (not `"../data/shakespeare.txt"`)
 
-A ready-to-run notebook is also included at `colab.ipynb` in the repo.
+Create a `colab.ipynb` in addition to the python files mentioned in this documentation so that you can run the training and generation in Google Colab. Infer the code using the main blocks from `model.py`, `train.py`, and `generate.py`.
 
 ## Step 1: Train
 
 ```bash
-cd scratchpad
-python train.py
+uv run train.py
 ```
 
 The default config trains a 6L/6H/384D model (~10M params) on Shakespeare for 5000 steps with batch_size=64. On an M3 Pro this takes ~45 minutes. You'll see:
@@ -55,10 +55,10 @@ The default config trains a 6L/6H/384D model (~10M params) on Shakespeare for 50
 ## Step 2: Generate
 
 ```bash
-python generate.py checkpoint_final.pt
+uv run generate.py checkpoint_final.pt
 ```
 
-This loads a checkpoint and generates text from three prompts. You can pass any checkpoint file as an argument.
+This loads a checkpoint and generates text from either the default prompts or custom prompts you provide. You can pass any checkpoint file as an argument.
 
 ## Step 3: Experiment
 
@@ -101,6 +101,7 @@ The training loop saves `loss_log.json`. You can plot it with any tool:
 
 ```python
 # pip install matplotlib
+# pip install clearml
 import json, matplotlib.pyplot as plt
 
 with open("loss_log.json") as f:
