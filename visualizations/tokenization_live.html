@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tokenization Encoder</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --block-color: #1e293b;
+            --border-color: #475569;
+            --highlight-color: #fbbf24;
+            --success-color: #34d399;
+            --danger-color: #f87171;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1 { margin-bottom: 5px; font-weight: 300; }
+        .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+
+        .demo-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .input-section {
+            background-color: var(--block-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .input-section .label {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--accent-color);
+        }
+
+        textarea {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            width: 100%;
+            max-width: 700px;
+            resize: vertical;
+            min-height: 60px;
+            box-sizing: border-box;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .char-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 15px;
+            min-height: 40px;
+        }
+
+        .char-token {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .char-box {
+            background-color: rgba(56, 189, 248, 0.15);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .id-box {
+            background-color: rgba(251, 191, 36, 0.15);
+            border: 1px solid var(--highlight-color);
+            color: var(--highlight-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .stat { display: flex; gap: 6px; align-items: center; }
+        .stat-value { color: var(--text-color); font-weight: bold; }
+
+        .unknown { border-color: var(--danger-color); color: var(--danger-color); background-color: rgba(248, 113, 113, 0.15); }
+
+        .output-section {
+            background-color: var(--block-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .output-section .label {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--highlight-color);
+        }
+
+        .code-output {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: #e2e8f0;
+            text-align: left;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .sample-texts {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .sample-btn {
+            background-color: rgba(56, 189, 248, 0.1);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .sample-btn:hover { background-color: rgba(56, 189, 248, 0.2); }
+    </style>
+</head>
+<body>
+
+    <h1>Live Tokenization Encoder</h1>
+    <div class="subtitle">Type text and watch it convert to token IDs in real time.</div>
+
+    <div class="demo-area">
+        <div class="input-section">
+            <div class="label">Type Shakespearean text</div>
+            <textarea id="inputText" placeholder="Type here... (e.g., 'To be, or not to be!')" rows="2"></textarea>
+            <div class="sample-texts">
+                <button class="sample-btn" data-text="To be, or not to be!">"To be..."</button>
+                <button class="sample-btn" data-text="O Romeo, Romeo!">"O Romeo..."</button>
+                <button class="sample-btn" data-text="All the world's a stage.">"All the world's..."</button>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="label">Character Tokens</div>
+            <div class="char-display" id="charDisplay"></div>
+            <div class="stats-bar">
+                <div class="stat">Characters: <span class="stat-value" id="charCount">0</span></div>
+                <div class="stat">Unique in vocab: <span class="stat-value" id="uniqueCount">0</span></div>
+                <div class="stat">Unknown: <span class="stat-value" id="unknownCount">0</span></div>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="label">Python Code</div>
+            <div class="code-output" id="codeOutput">
+# Type above to see the encode/decode code
+text = "..."
+ids = [stoi[c] for c in text]
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Shakespeare character vocabulary (65 chars)
+        const shakespeareChars = [
+            '\n', ' ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            ':', ';', '<', '=', '>', '?', '@',
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            '[', '\\', ']', '^', '_', '`',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+            '{', '|', '}', '~'
+        ];
+
+        const stoi = {};
+        const itos = {};
+        shakespeareChars.forEach((c, i) => {
+            stoi[c] = i;
+            itos[i] = c;
+        });
+
+        const inputText = document.getElementById('inputText');
+        const charDisplay = document.getElementById('charDisplay');
+        const charCount = document.getElementById('charCount');
+        const uniqueCount = document.getElementById('uniqueCount');
+        const unknownCount = document.getElementById('unknownCount');
+        const codeOutput = document.getElementById('codeOutput');
+
+        function updateDisplay(text) {
+            charDisplay.innerHTML = '';
+            let unknown = 0;
+            const seen = new Set();
+
+            const chars = text.split('');
+            chars.forEach((ch, i) => {
+                const isUnknown = !(ch in stoi);
+                const id = isUnknown ? '?' : stoi[ch];
+                if (!isUnknown) seen.add(ch);
+                else unknown++;
+
+                const token = document.createElement('div');
+                token.className = 'char-token';
+
+                const charBox = document.createElement('div');
+                charBox.className = 'char-box' + (isUnknown ? ' unknown' : '');
+                charBox.textContent = ch === ' ' ? '␣' : ch === '\n' ? '↵' : ch;
+
+                const idBox = document.createElement('div');
+                idBox.className = 'id-box' + (isUnknown ? ' unknown' : '');
+                idBox.textContent = id;
+
+                token.appendChild(charBox);
+                token.appendChild(idBox);
+                charDisplay.appendChild(token);
+            });
+
+            charCount.textContent = chars.length;
+            uniqueCount.textContent = seen.size;
+            unknownCount.textContent = unknown;
+
+            const safeText = text.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+            const ids = chars.map(ch => stoi[ch]).filter(id => id !== undefined);
+            codeOutput.textContent = `text = "${safeText}"
+ids = [stoi[c] for c in text]
+# → [${ids.join(', ')}]`;
+        }
+
+        inputText.addEventListener('input', () => {
+            updateDisplay(inputText.value);
+        });
+
+        document.querySelectorAll('.sample-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                inputText.value = btn.dataset.text;
+                updateDisplay(btn.dataset.text);
+            });
+        });
+
+        // Start with sample text
+        inputText.value = "To be, or not to be!";
+        updateDisplay(inputText.value);
+    </script>
+</body>
+</html>

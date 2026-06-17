@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Step Cycle</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --block-color: #1e293b;
+            --border-color: #475569;
+            --highlight-color: #fbbf24;
+            --success-color: #34d399;
+            --danger-color: #f87171;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1 { margin-bottom: 5px; font-weight: 300; }
+        .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: var(--block-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 24px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        button:hover { background-color: var(--border-color); }
+        button.active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            font-weight: bold;
+            border-color: var(--accent-color);
+        }
+
+        .cycle-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin: 20px 0;
+        }
+
+        .stage {
+            position: absolute;
+            width: 130px;
+            padding: 12px;
+            background-color: var(--block-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+            z-index: 2;
+        }
+
+        .stage.active {
+            border-color: var(--highlight-color);
+            box-shadow: 0 0 15px var(--highlight-color);
+            transform: scale(1.05);
+        }
+
+        .stage .label {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .stage .detail {
+            font-size: 11px;
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .center-hub {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 160px;
+            background-color: var(--block-color);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            z-index: 3;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+        }
+
+        .center-hub .metric {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .center-hub .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .center-hub .loss-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--highlight-color);
+        }
+
+        svg.ring-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .arrow-path {
+            fill: none;
+            stroke: var(--border-color);
+            stroke-width: 2;
+            stroke-dasharray: 6 4;
+        }
+
+        .arrow-path.active {
+            stroke: var(--accent-color);
+            stroke-width: 3;
+        }
+
+        .progress-dot {
+            fill: var(--highlight-color);
+            filter: drop-shadow(0 0 6px var(--highlight-color));
+        }
+
+        .status-bar {
+            margin-top: 10px;
+            font-style: italic;
+            color: var(--accent-color);
+            height: 24px;
+            font-size: 14px;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .speed-control label {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        input[type="range"] {
+            width: 120px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Training Step Cycle</h1>
+    <div class="subtitle">One complete training step: forward, backward, update.</div>
+
+    <div class="controls">
+        <button id="playBtn">Play</button>
+        <button id="stepBtn">Step</button>
+        <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="speed-control">
+        <label for="speedSlider">Speed:</label>
+        <input type="range" id="speedSlider" min="1" max="5" value="3">
+    </div>
+
+    <div class="cycle-container" id="cycleContainer">
+        <svg class="ring-svg" id="ringSvg" viewBox="0 0 500 500">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7"
+                        refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#475569" />
+                </marker>
+                <marker id="arrowhead-active" markerWidth="10" markerHeight="7"
+                        refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#38bdf8" />
+                </marker>
+            </defs>
+        </svg>
+
+        <!-- Stages positioned around the ring -->
+        <div class="stage" id="stage-0" style="left: 185px; top: 10px;">
+            <div class="label">Get Batch</div>
+            <div class="detail">x, y ~ data</div>
+        </div>
+        <div class="stage" id="stage-1" style="left: 360px; top: 90px;">
+            <div class="label">Forward Pass</div>
+            <div class="detail">model(x, y)</div>
+        </div>
+        <div class="stage" id="stage-2" style="left: 360px; top: 280px;">
+            <div class="label">Compute Loss</div>
+            <div class="detail">cross_entropy</div>
+        </div>
+        <div class="stage" id="stage-3" style="left: 185px; top: 360px;">
+            <div class="label">Backward</div>
+            <div class="detail">loss.backward()</div>
+        </div>
+        <div class="stage" id="stage-4" style="left: 10px; top: 280px;">
+            <div class="label">Grad Clip</div>
+            <div class="detail">norm &le; 1.0</div>
+        </div>
+        <div class="stage" id="stage-5" style="left: 10px; top: 90px;">
+            <div class="label">Optimizer Step</div>
+            <div class="detail">AdamW.step()</div>
+        </div>
+
+        <div class="center-hub">
+            <div class="metric">Step</div>
+            <div class="metric-value" id="stepDisplay">0</div>
+            <div class="metric">Loss</div>
+            <div class="loss-value" id="lossDisplay">4.174</div>
+            <div class="metric">LR</div>
+            <div class="metric-value" id="lrDisplay">0.00010</div>
+        </div>
+    </div>
+
+    <div class="status-bar" id="statusText">Ready. Press Play or Step.</div>
+
+    <script>
+        const stages = [
+            { id: 'stage-0', label: 'Get Batch', desc: 'Sampling random windows from training data...' },
+            { id: 'stage-1', label: 'Forward Pass', desc: 'Running input through transformer layers...' },
+            { id: 'stage-2', label: 'Compute Loss', desc: 'Measuring prediction error with cross-entropy...' },
+            { id: 'stage-3', label: 'Backward', desc: 'Computing gradients via backpropagation...' },
+            { id: 'stage-4', label: 'Grad Clip', desc: 'Capping gradient magnitude at 1.0...' },
+            { id: 'stage-5', label: 'Optimizer Step', desc: 'AdamW updates weights with clipped gradients...' },
+        ];
+
+        const center = { x: 250, y: 250 };
+        const radius = 170;
+        const stagePositions = stages.map((_, i) => {
+            const angle = (i / stages.length) * 2 * Math.PI - Math.PI / 2;
+            return {
+                x: center.x + radius * Math.cos(angle),
+                y: center.y + radius * Math.sin(angle),
+            };
+        });
+
+        // Draw ring arrows
+        const svg = document.getElementById('ringSvg');
+        const paths = [];
+        for (let i = 0; i < stages.length; i++) {
+            const p1 = stagePositions[i];
+            const p2 = stagePositions[(i + 1) % stages.length];
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+            // Compute outward control points for a smooth arc
+            const midAngle = ((i + 0.5) / stages.length) * 2 * Math.PI - Math.PI / 2;
+            const ctrlRadius = radius + 30;
+            const cpx = center.x + ctrlRadius * Math.cos(midAngle);
+            const cpy = center.y + ctrlRadius * Math.sin(midAngle);
+
+            const d = `M ${p1.x} ${p1.y} Q ${cpx} ${cpy} ${p2.x} ${p2.y}`;
+            path.setAttribute('d', d);
+            path.setAttribute('class', 'arrow-path');
+            path.setAttribute('marker-end', 'url(#arrowhead)');
+            path.setAttribute('id', `path-${i}`);
+            svg.appendChild(path);
+            paths.push(path);
+        }
+
+        // Progress dot
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('r', '6');
+        dot.setAttribute('class', 'progress-dot');
+        dot.setAttribute('id', 'progressDot');
+        svg.appendChild(dot);
+
+        let currentStep = 0;
+        let globalStep = 0;
+        let isPlaying = false;
+        let timer = null;
+
+        const playBtn = document.getElementById('playBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusText = document.getElementById('statusText');
+        const speedSlider = document.getElementById('speedSlider');
+        const stepDisplay = document.getElementById('stepDisplay');
+        const lossDisplay = document.getElementById('lossDisplay');
+        const lrDisplay = document.getElementById('lrDisplay');
+
+        function getSpeedMs() {
+            const val = parseInt(speedSlider.value, 10);
+            // 1 = slow (1200ms), 5 = fast (200ms)
+            return 1400 - val * 240;
+        }
+
+        function getLR(step) {
+            const max_lr = 1e-3;
+            const min_lr = 1e-4;
+            const warmup = 100;
+            const max_steps = 5000;
+            if (step < warmup) return max_lr * (step + 1) / warmup;
+            if (step >= max_steps) return min_lr;
+            const p = (step - warmup) / (max_steps - warmup);
+            return min_lr + 0.5 * (max_lr - min_lr) * (1 + Math.cos(Math.PI * p));
+        }
+
+        function getLoss(step) {
+            // Simulated loss curve
+            const random = Math.sin(step * 0.7) * 0.05 + Math.cos(step * 1.3) * 0.03;
+            const base = 4.17 * Math.exp(-step / 1200) + 0.5;
+            return Math.max(0.3, base + random);
+        }
+
+        function updateDotPosition(stageIndex, t = 0) {
+            const p1 = stagePositions[stageIndex];
+            const p2 = stagePositions[(stageIndex + 1) % stages.length];
+            const midAngle = ((stageIndex + 0.5) / stages.length) * 2 * Math.PI - Math.PI / 2;
+            const ctrlRadius = radius + 30;
+            const cpx = center.x + ctrlRadius * Math.cos(midAngle);
+            const cpy = center.y + ctrlRadius * Math.sin(midAngle);
+
+            // Quadratic bezier interpolation
+            const oneMinusT = 1 - t;
+            const x = oneMinusT * oneMinusT * p1.x + 2 * oneMinusT * t * cpx + t * t * p2.x;
+            const y = oneMinusT * oneMinusT * p1.y + 2 * oneMinusT * t * cpy + t * t * p2.y;
+            dot.setAttribute('cx', x);
+            dot.setAttribute('cy', y);
+        }
+
+        function activateStage(index) {
+            document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+            paths.forEach(p => {
+                p.classList.remove('active');
+                p.setAttribute('marker-end', 'url(#arrowhead)');
+            });
+
+            const stageEl = document.getElementById(stages[index].id);
+            if (stageEl) stageEl.classList.add('active');
+
+            const pathEl = document.getElementById(`path-${index}`);
+            if (pathEl) {
+                pathEl.classList.add('active');
+                pathEl.setAttribute('marker-end', 'url(#arrowhead-active)');
+            }
+
+            statusText.textContent = stages[index].desc;
+            updateDotPosition(index, 0);
+        }
+
+        function advance() {
+            const prev = currentStep;
+            currentStep = (currentStep + 1) % stages.length;
+
+            if (currentStep === 0 && prev === stages.length - 1) {
+                globalStep++;
+            }
+
+            activateStage(currentStep);
+            stepDisplay.textContent = globalStep;
+            lossDisplay.textContent = getLoss(globalStep).toFixed(3);
+            lrDisplay.textContent = getLR(globalStep).toExponential(4);
+        }
+
+        playBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            playBtn.textContent = isPlaying ? 'Pause' : 'Play';
+            playBtn.classList.toggle('active', isPlaying);
+
+            if (isPlaying) {
+                timer = setInterval(advance, getSpeedMs());
+            } else {
+                clearInterval(timer);
+            }
+        });
+
+        speedSlider.addEventListener('input', () => {
+            if (isPlaying) {
+                clearInterval(timer);
+                timer = setInterval(advance, getSpeedMs());
+            }
+        });
+
+        stepBtn.addEventListener('click', () => {
+            isPlaying = false;
+            playBtn.textContent = 'Play';
+            playBtn.classList.remove('active');
+            clearInterval(timer);
+            advance();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            isPlaying = false;
+            playBtn.textContent = 'Play';
+            playBtn.classList.remove('active');
+            clearInterval(timer);
+            currentStep = -1;
+            globalStep = 0;
+            stepDisplay.textContent = '0';
+            lossDisplay.textContent = '4.174';
+            lrDisplay.textContent = '0.00010';
+            statusText.textContent = 'Ready. Press Play or Step.';
+            document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+            paths.forEach(p => {
+                p.classList.remove('active');
+                p.setAttribute('marker-end', 'url(#arrowhead)');
+            });
+            dot.setAttribute('cx', stagePositions[0].x);
+            dot.setAttribute('cy', stagePositions[0].y);
+        });
+
+        // Initialize dot at first stage
+        dot.setAttribute('cx', stagePositions[0].x);
+        dot.setAttribute('cy', stagePositions[0].y);
+    </script>
+</body>
+</html>
