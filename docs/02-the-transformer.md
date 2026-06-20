@@ -37,6 +37,7 @@ class GPTConfig:
 An embedding is a learned vector of numbers that represents a token or position in a way the model can use. The token ID is only an index; the embedding vector is the learned representation the transformer actually processes.
 
 ```python
+from typing import cast
 import torch
 import torch.nn as nn
 
