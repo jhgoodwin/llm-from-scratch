@@ -9,6 +9,8 @@ Create a new file called `generate.py` in the project root. Once you've written 
 Always pick the most probable next token.
 
 ```python
+import torch
+
 def generate_greedy(model, idx, max_new_tokens):
     for _ in range(max_new_tokens):
         idx_cond = idx[:, -model.config.block_size:]
@@ -92,6 +94,7 @@ Add this to the bottom of `generate.py` so you can run it from the terminal:
 ```python
 if __name__ == "__main__":
     import argparse
+    from model import GPT
 
     parser = argparse.ArgumentParser(description="Generate text from a trained GPT checkpoint")
     parser.add_argument("checkpoint", help="Path to checkpoint file (e.g. checkpoint_final.pt)")

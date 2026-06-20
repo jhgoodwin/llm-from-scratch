@@ -134,6 +134,9 @@ You'll call this at the top of `train()`. Two things make remote execution work:
 import json
 import os
 
+from model import GPT, GPTConfig
+from generate import generate
+
 def train(data_path, max_steps=5000, batch_size=64,
           n_layer=6, n_head=6, n_embd=384, block_size=256,
           use_clearml=True):
